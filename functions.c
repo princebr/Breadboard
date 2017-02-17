@@ -43,6 +43,22 @@ uint8_t init_bcm(void)
 		bcm2835_gpio_fsel(SW4, BCM2835_GPIO_FSEL_INPT);
 		bcm2835_gpio_fsel(SW5, BCM2835_GPIO_FSEL_INPT);
 		
+		// Set uSW I/O to inputs
+		bcm2835_gpio_fsel(NEU_USW, BCM2835_GPIO_FSEL_INPT);
+		bcm2835_gpio_fsel(LAY_USW, BCM2835_GPIO_FSEL_INPT);
+		
+		// Clear EDS registers for uSW
+		bcm2835_gpio_ren(NEU_USW);
+		bcm2835_gpio_ren(LAY_USW);
+		bcm2835_gpio_set_eds(NEU_USW);
+		bcm2835_gpio_set_eds(LAY_USW);
+		
+		
+		// Set Relay I/O to outputs
+		bcm2835_gpio_fsel(TTL_SW, BCM2835_GPIO_FSEL_OUTP);
+		bcm2835_gpio_fsel(NEU_SW, BCM2835_GPIO_FSEL_OUTP);
+		bcm2835_gpio_fsel(LAY_SW, BCM2835_GPIO_FSEL_OUTP);
+		
 		// Set Status LED output
 		bcm2835_gpio_fsel(ST_LED, BCM2835_GPIO_FSEL_OUTP);
 		
@@ -85,6 +101,13 @@ void set_initial_conditions(void)
 {
 	//Turn on Status LED
 	set_led(ST_LED);
+	
+	//***********************************/
+	// Reading Light Hack - use .state 
+	readingLight1.pwmRaw = RL_DEFAULT_MAX;
+	readingLight.intensity = RL_DEFAULT_MAX;
+	readingLight.state = RL1;
+	//***********************************/
 	
 	// Set Reading Light 1
 	readingLight1.state = OFF;
@@ -256,6 +279,55 @@ uint64_t test_timer(void)
 	return bcm2835_st_read();
 }
 
+
+/* --------- SWITCH ACTIONS --------- */
+void svc_NEU_usw(void)
+{
+	//if (bcm2835_gpio_eds(NEU_USW))
+	if (bcm2835_gpio_lev(NEU_USW) & readingLight.state == RL1)
+	{
+		//if (readingLight.state == RL1)
+		//{
+			readingLight.state = RL2;
+			readingLight1.pwmRaw = 0;
+			readingLight2.pwmRaw = RL_DEFAULT_MAX;
+			write_lighting_feature(readingLight1);
+			write_lighting_feature(readingLight2);
+	}
+	else if (!bcm2835_gpio_lev(NEU_USW) & readingLight.state == RL2)
+	{
+			readingLight.state = RL1;
+			readingLight1.pwmRaw = RL_DEFAULT_MAX;
+			readingLight2.pwmRaw = 0;
+			write_lighting_feature(readingLight1);
+			write_lighting_feature(readingLight2);
+	}
+			
+		// dim lighting
+		// toggle reading lights
+		
+		// Clear EDS register
+		bcm2835_gpio_set_eds(NEU_USW);
+	//}
+	
+	return;
+}
+
+
+void svc_LAY_usw(void)
+{
+	if (bcm2835_gpio_eds(LAY_USW))
+	{
+		printf("LAY uSW \n");
+		// dim lighting
+		// unmute audio
+		bcm2835_gpio_set_eds(LAY_USW);
+	}
+	
+	return;
+}
+
+
 /* --------- BTN ACTIONS --------- */
 uint8_t poll_ATTD_btn(void)
 {
@@ -270,17 +342,6 @@ uint8_t poll_DND_btn(void)
 
 void svc_ATTD_btn(void)
 {
-	/*
-	if (!bcm2835_gpio_lev(SW1)) {
-		capATTDWhiteLight.pwmRaw = 1000;
-		write_lighting_feature(capATTDWhiteLight);
-		//printf("LOW\n");
-	}
-	else {
-		capATTDWhiteLight.pwmRaw = CAP_LIGHT_DEFAULT;
-		write_lighting_feature(capATTDWhiteLight);
-		//printf("HIGH\n");
-	}*/
 	if (!bcm2835_gpio_lev(SW1)) {
 		printf("State: %d\n", capATTDWhiteLight.state);
 		if (capATTDWhiteLight.state == WHITE) {
@@ -309,18 +370,6 @@ void svc_ATTD_btn(void)
 
 void svc_DND_btn(void)
 {
-	/*
-	if (!bcm2835_gpio_lev(SW2)) {
-		capDNDWhiteLight.pwmRaw = 1000;
-		write_lighting_feature(capDNDWhiteLight);
-		//printf("LOW\n");
-	}
-	else {
-		capDNDWhiteLight.pwmRaw = CAP_LIGHT_DEFAULT;
-		write_lighting_feature(capDNDWhiteLight);
-		//printf("HIGH\n");
-	}
-	*/
 	if (!bcm2835_gpio_lev(SW2)) {
 		printf("State: %d\n", capDNDWhiteLight.state);
 		if (capDNDWhiteLight.state == WHITE) {
@@ -352,6 +401,8 @@ void svc_RL_btn(void)
 	if (!bcm2835_gpio_lev(SW3)) {
 		capRLLight.pwmRaw = 1000;
 		write_lighting_feature(capRLLight);
+		
+		// Add toggle for reading lights...
 	}
 	else {
 		capRLLight.pwmRaw = CAP_LIGHT_DEFAULT;
@@ -366,10 +417,12 @@ void svc_LAY_btn(void)
 	if (!bcm2835_gpio_lev(SW4)) {
 		capLAYLight.pwmRaw = 1000;
 		write_lighting_feature(capLAYLight);
+		bcm2835_gpio_write(LAY_SW, HIGH);
 	}
 	else {
 		capLAYLight.pwmRaw = CAP_LIGHT_DEFAULT;
 		write_lighting_feature(capLAYLight);
+		bcm2835_gpio_write(LAY_SW, LOW);
 	}
 	return;
 }
@@ -379,10 +432,12 @@ void svc_TTL_btn(void)
 	if (!bcm2835_gpio_lev(SW5)) {
 		capTTLLight.pwmRaw = 1000;
 		write_lighting_feature(capTTLLight);
+		bcm2835_gpio_write(TTL_SW, HIGH);
 	}
 	else {
 		capTTLLight.pwmRaw = CAP_LIGHT_DEFAULT;
 		write_lighting_feature(capTTLLight);
+		bcm2835_gpio_write(TTL_SW, LOW);
 	}
 	return;
 }

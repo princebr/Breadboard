@@ -35,15 +35,11 @@ int main(int argc, char **argv)
 	write_lighting_feature(capRLLight);
 	delay_ms(500);
 	write_lighting_feature(capDNDWhiteLight);
-	//delay_ms(500);
-	//write_lighting_feature(capDNDRedLight);
 	delay_ms(500);
 	write_lighting_feature(capATTDWhiteLight);
-	//delay_ms(500);
-	//write_lighting_feature(capATTDBlueLight);
 	delay_ms(500);
-	readingLight2.pwmRaw = 0;
-	write_lighting_feature(readingLight2);
+	
+	write_lighting_feature(readingLight1);
 	
 	
 	/*------------------- Main Routine --------------------*/
@@ -67,6 +63,9 @@ int main(int argc, char **argv)
 		svc_RL_btn();
 		svc_LAY_btn();
 		svc_TTL_btn();
+		
+		svc_NEU_usw();
+		svc_LAY_usw();
 		//delay_ms(400);
 		
 		

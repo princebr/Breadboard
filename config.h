@@ -2,7 +2,9 @@
 
 /* ------------------------ OUTPUTS --------------------------------- */
 #define ST_LED RPI_V2_GPIO_P1_32	// Status LED
-
+#define TTL_SW RPI_V2_GPIO_P1_15	// TTL Relay
+#define NEU_SW RPI_V2_GPIO_P1_13	// NEU Relay
+#define LAY_SW RPI_V2_GPIO_P1_11	// LAY Relay
 
 /* ------------------------ INPUTS ---------------------------------- */
 #define SW1 RPI_V2_GPIO_P1_29
@@ -10,6 +12,9 @@
 #define SW3 RPI_V2_GPIO_P1_33
 #define SW4 RPI_V2_GPIO_P1_35
 #define SW5 RPI_V2_GPIO_P1_37
+
+#define NEU_USW RPI_V2_GPIO_P1_18
+#define LAY_USW RPI_V2_GPIO_P1_16
 
 /* ----------------------- LIGHTING CONSTANTS ----------------------- */
 #define MODE_READ 0
@@ -30,6 +35,9 @@
 #define WHITE 	2
 #define BLUE	3
 #define RED		4
+
+#define RL1		1
+#define RL2		2
 
 /* ------------------------ PCA9685 CONSTANTS ----------------------- */
 #define MODE1 0x00

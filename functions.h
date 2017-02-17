@@ -35,6 +35,15 @@ struct ledRGBFeature stowageLight;
 //--------------------------------------
 
 
+// Reading Light State -----------------
+struct rlFeature {
+	uint8_t state;
+	uint16_t intensity;
+	};
+
+struct rlFeature readingLight; 
+//--------------------------------------
+
 uint8_t init_bcm(void);
 void init_periph(void);
 void set_initial_conditions(void);
@@ -54,4 +63,6 @@ void svc_TTL_btn(void);
 void set_led(uint8_t);
 void clear_led(uint8_t);
 void toggle_led(uint8_t);
+void svc_NEU_usw(void);
+void svc_LAY_usw(void);
 
